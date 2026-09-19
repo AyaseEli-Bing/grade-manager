@@ -8,10 +8,14 @@
 
 ## 一、快速开始
 
-### 方式一：直接使用打包好的应用（推荐）
+### 方式一：直接下载可执行程序（推荐）
 
-- macOS：打开 `src-tauri/target/release/bundle/macos/班级成绩管理系统.app`
-- Windows：在 Windows 机器上执行一次 `npm run build`，产物在 `src-tauri/target/release/bundle/`（`.msi` / `.exe`）
+前往 [Releases](https://github.com/AyaseElibing/grade-manager/releases/latest) 下载：
+
+| 平台 | 文件 | 说明 |
+|------|------|------|
+| macOS（Apple Silicon） | `grade-manager-v1.0.0-macos-arm64.zip`（1.6 MB） | 解压后把 `班级成绩管理系统.app` 拖进「应用程序」。应用未签名，首次打开若提示「无法验证开发者」，在应用上**右键 → 打开**放行一次即可 |
+| Windows | 需自行构建 | 把 `src-tauri/tauri.conf.json` 里的 `bundle.targets` 改成 `["nsis"]`，执行 `npm run build`，产物为 `.exe` 安装程序 |
 
 ### 方式二：从源码运行
 
