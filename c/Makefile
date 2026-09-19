@@ -63,10 +63,16 @@ OBJ  = $(SRC:src/%.c=build/%.o)
 BIN  = build/grades
 TEST_BIN = build/test-logic
 
-# Windows 交叉编译用的 Zig（见 c/README.md）
-ZIG ?= $(HOME)/.local/toolchains/zig-0.16.0/zig
+# Windows 交叉编译用的 Zig；可用 make win ZIG=/path/to/zig 覆盖
+PY ?= python3
+ZIG ?= $(HOME)/.local/toolchains/zig-npm/package/zig
 
-.PHONY: all run test asan wincheck win verify clean dirs
+# 交叉编译时必须显式列出 Windows 后端：在 macOS 上 OS 不等于 Windows_NT，
+# PLATFORM_SRC 是空的，不显式列出就会漏掉 win_*.c。
+WIN_SRC = $(SRC_LOGIC) $(SRC_UI) $(SRC_MAIN) \
+          src/win_curses.c src/win_refresh.c src/win_draw.c src/win_input.c
+
+.PHONY: all run test asan wincheck win winpe verify clean dirs
 
 all: dirs $(BIN)
 
@@ -102,8 +108,12 @@ win: dirs
 	@if [ ! -x "$(ZIG)" ]; then echo "找不到 Zig：$(ZIG)"; echo "见 c/README.md 的「Windows 构建」一节"; exit 1; fi
 	$(ZIG) cc -target x86_64-windows-gnu -std=c11 -O2 $(WARNINGS) \
 		-Wl,--major-subsystem-version,6 -Wl,--minor-subsystem-version,1 \
-		-I include $(SRC) -o build/grades-win64.exe -lm
-	@echo "已生成 build/grades-win64.exe（PE 最低子系统版本 6.1 = Windows 7）"
+		-I include $(WIN_SRC) -o build/grades-win64.exe
+	@echo "已生成 build/grades-win64.exe"
+
+# 校验 PE 头：架构 / 子系统 / 最低版本 / 依赖的 DLL，并说明 Win7 上的部署前提
+winpe: win
+	@$(PY) tests/inspect_pe.py build/grades-win64.exe
 
 verify:
 	@bash ../scripts/verify-c.sh

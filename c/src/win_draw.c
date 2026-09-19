@@ -73,6 +73,9 @@ static wchar_t utf8_decode(const char *text, int *index) {
     cp = (cp << 6) | (next & 0x3ful);
   }
   *index += extra + 1;
+  /* Windows 的 wchar_t 只有 16 位，非 BMP 字符（CJK 扩展 B 区、emoji 等）装不下。
+     直接强转会得到另一个字符，属于静默出错；这里显式降级为替换字符，让异常可见。 */
+  if (cp > (unsigned long)WCHAR_MAX) return (wchar_t)0xFFFD;
   return (wchar_t)cp;
 }
 

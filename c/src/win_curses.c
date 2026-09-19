@@ -92,11 +92,15 @@ int gm_win_usable(const WINDOW *win, int y, int x) {
 int gm_win_put_wchar(WINDOW *win, int y, int x, wchar_t ch) {
   if (!gm_win_usable(win, y, x)) return 1;
 
-  int wide = iswprint(ch) && (ch >= 0x1100) &&
-             ((ch >= 0x1100 && ch <= 0x115f) || (ch >= 0x2e80 && ch <= 0xa4cf) ||
-              (ch >= 0xac00 && ch <= 0xd7a3) || (ch >= 0xf900 && ch <= 0xfaff) ||
-              (ch >= 0xfe30 && ch <= 0xfe6f) || (ch >= 0xff00 && ch <= 0xff60) ||
-              (ch >= 0xffe0 && ch <= 0xffe6) || (ch >= 0x20000 && ch <= 0x3fffd));
+  /* 双宽字符判定。注意 Windows 的 wchar_t 是 16 位，
+     所以只能判定 BMP 内的范围（CJK 扩展 B 区等非 BMP 字符在 Windows 上
+     本就需要代理对表示，单个 wchar_t 装不下，见 utf8_decode 的处理）。 */
+  unsigned long cp = (unsigned long)ch;
+  int wide = iswprint(ch) &&
+             ((cp >= 0x1100 && cp <= 0x115f) || (cp >= 0x2e80 && cp <= 0xa4cf) ||
+              (cp >= 0xac00 && cp <= 0xd7a3) || (cp >= 0xf900 && cp <= 0xfaff) ||
+              (cp >= 0xfe30 && cp <= 0xfe6f) || (cp >= 0xff00 && cp <= 0xff60) ||
+              (cp >= 0xffe0 && cp <= 0xffe6));
   int slots = wide ? 2 : 1;
 
   GmCell *cell = &win->cells[(size_t)y * (size_t)win->width + (size_t)x];

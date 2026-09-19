@@ -4,7 +4,8 @@
 **共用同一个数据文件和同一套 JSON / CSV 格式**，两个版本可以随时切换着用同一份数据。
 
 - **macOS / Linux**：链接系统自带的 ncurses
-- **Windows（含 Win7）**：使用自带的 Win32 控制台后端，不需要 ncurses，也不需要任何额外运行库
+- **Windows（含 Win7）**：使用自带的 Win32 控制台后端，不需要 ncurses。
+  注意：编译器带来的 UCRT 运行时在 Win10/11 上自带，**Win7 需要先装 KB2999226**，详见第六节
 
 ---
 
@@ -13,7 +14,8 @@
 图形版用的是 Tauri + WebView2，而 **WebView2 已不支持 Windows 7**（最后一个支持 Win7 的版本停在
 109，2023 年 1 月之后微软不再提供）。所以要在 Win7 上用，只能走原生程序这条路。
 
-C 版直接在控制台绘制汉字界面，只依赖系统自带的控制台 API，Win7 上开箱可用。
+C 版直接在控制台绘制汉字界面，只依赖系统自带的控制台 API，并刻意避开了 Win7 没有的
+ANSI/VT 转义序列与 Win10+ 才有的接口。Win7 上可直接运行（有一处运行时前提，见第六节）。
 
 ---
 
@@ -138,7 +140,8 @@ c/
 ```bash
 make test      # 逻辑层单元测试（89 项）
 make asan      # 用 AddressSanitizer + UBSan 再跑一遍（内存安全）
-make wincheck  # Windows 分支类型自检
+make wincheck  # Windows 分支类型自检（无需 Windows SDK）
+make winpe     # 交叉编译出 Windows .exe 并核对 PE 头（需要 Zig）
 make verify    # 全部质量门禁
 ```
 
@@ -149,6 +152,7 @@ make verify    # 全部质量门禁
 | 逻辑层 | `tests/test_logic.c` | JSON 解析与转义、数据清洗、排名规则、单科统计、CSV 引号解析、文件往返 |
 | 界面层 | `tests/test_tui.py` | 在真实伪终端里运行程序、按键、用终端模拟器渲染屏幕后断言 |
 | Windows 分支 | `scripts/check-win.sh` | 用手写 Win32 声明编译 Windows 代码，抓语法 / 类型 / 字段 / 参数顺序错误 |
+| Windows 产物 | `tests/inspect_pe.py` | 解析交叉编译出的 .exe 的 PE 头：架构 / 子系统 / 最低版本 / 依赖的 DLL，并说明 Win7 部署前提 |
 
 界面层测试需要 `pyte`：
 
@@ -176,34 +180,66 @@ python3 tests/test_tui.py
 
 这一节要把话说清楚，避免你基于错误的预期部署。
 
-### 已经做到的
+### 已交叉编译并验证过的事实
 
-- **不使用任何 Win10+ 才有的 API**。用到的全部是 Win7 就存在的：
-  `GetStdHandle` / `GetConsoleScreenBufferInfo` / `WriteConsoleOutputW` /
-  `ReadConsoleInputW` / `SetConsoleMode` / `MoveFileExA` / `GetFileAttributesA` 等。
-- **不依赖 ANSI / VT 转义序列**。Win7 控制台不支持 VT，所以定位与上色全部走
-  `WriteConsoleOutputW` 的 `CHAR_INFO`（字符 + 属性一次性写入）。
-- **中文走宽字符路径**。输出用 `WriteConsoleOutputW`，输入用 `ReadConsoleInputW` +
-  `WideCharToMultiByte(CP_UTF8)`。字节流 UTF-8 输出在 Win7 控制台下不可靠（即使 `chcp 65001`），
-  因此刻意避开。
-- **链接时把 PE 最低子系统版本标成 6.1**（`-Wl,--major-subsystem-version,6 -Wl,--minor-subsystem-version,1`），
-  否则系统可能直接拒绝启动。
-- 界面渲染是**整块写入字符网格**，因此没有逐字符输出的闪烁问题。
+产物 `build/grades-win64.exe`（251 KB）已经用 `zig cc -target x86_64-windows-gnu` 编译出来，
+并用 `tests/inspect_pe.py` 解析 PE 头逐项核对：
 
-### 还没验证的（重要）
+| 检查项 | 结果 |
+|--------|------|
+| 是否合法 PE | ✓ PE32+ |
+| 目标架构 | ✓ x86_64 |
+| 子系统 | ✓ Windows 控制台（3），双击即有窗口 |
+| **最低子系统版本** | ✓ **6.0**（≤ 6.1），Windows 7 不会拒绝启动 |
+| 依赖的系统 DLL | kernel32 + UCRT 系列（见下） |
 
-- **没有在真实的 Windows（更别说 Win7）上编译和运行过。**
-  本机是 macOS，既没有 Windows SDK 也没有 MinGW，Zig 工具链因网络原因未能下载成功。
-  我做到的替代验证是用手写的最小 Win32 声明（`tests/win32stub/`）把 Windows 分支
-  编译了一遍，能抓语法 / 类型 / 结构体字段 / 参数顺序错误，**但抓不到与真实 `windows.h` 声明的差异** ——
-  万一我把某个 Win32 函数的签名写错了，自检会"通过"而真实编译失败。
+### ⚠️ 一个必须知道的前提：Win7 需要 UCRT 更新
+
+Zig 自带的 MinGW-w64 固定使用 **UCRT（通用 C 运行时）**，产物依赖
+`api-ms-win-crt-*.dll`。这些 DLL：
+
+- **Windows 10 / 11**：系统自带，开箱即用
+- **Windows 7**：**系统默认没有**，需要先安装
+  [Universal C Runtime 更新（KB2999226）](https://support.microsoft.com/help/2999226)。
+  实践中最简单的办法是安装 **Visual C++ 2015-2022 可再发行组件（x64）**，
+  它会一并把 UCRT 装上；很多 Win7 机器在历年 Windows Update 中也已经装过了。
+
+没装的话，启动时会报「计算机中丢失 api-ms-win-crt-runtime-l1-1-0.dll」。
+这是现代 Windows 软件的普遍前提，不是这个程序特有的问题，但**必须提前知道**。
+
+```bash
+make winpe    # 交叉编译并自动核对 PE 头，会把上述结论再打印一遍
+```
+
+### 如果你要求 Win7 上绝对零前置依赖
+
+那就要避开 UCRT，改用 **MSVCRT 运行时的 MinGW-w64**（`msvcrt.dll` 是 Win7 自带的，
+所以不需要任何更新）。在 Windows 上装一个 MSVCRT 版工具链再编译即可：
+
+1. 到 [winlibs.com](https://winlibs.com/) 下载标注 **MSVCRT runtime** 的
+   MinGW-w64（注意不要选 UCRT 版），解压后把 `bin` 加进 PATH；
+   MSYS2 用户则装 `mingw-w64-x86_64-msvcrt-*` 系列包（MSYS2 默认已是 UCRT）。
+2. 用 `c/README.md` 第二节给出的编译命令重新编译。
+3. 再跑一次 `python tests/inspect_pe.py grades.exe`，
+   确认依赖列表里**只有 kernel32.dll 与 msvcrt.dll**，没有 `api-ms-win-crt-*`。
+
+> 本机（macOS）无法产出这种二进制 —— Zig 既不附带可再分发的 UCRT DLL，
+> 也没有旧版 msvcrt 导入库，所以这一步只能在 Windows 上做。
+
+### 还没验证的（同样重要）
+
+- **没有在真实的 Windows 上运行过**（本机是 macOS，也没有 Wine）。
+  编译与 PE 结构已经验证，但**运行时行为**（控制台绘制、按键、中文显示）尚未实证。
+  对此我做了两件事降低风险：Windows 分支用本机 clang + 手写 Win32 声明做类型自检（`make wincheck`），
+  以及用伪终端 + 终端模拟器把整套界面逻辑在 ncurses 上跑通（`make test` 的界面层 35 项）。
+  但两者都不能替代真实运行。
 - **Win7 控制台的中文输入（IME）体验未知。** 控制台对输入法的支持在 Win7 上历来不佳。
-  如果录入中文姓名遇到困难，最稳的办法是用 Excel 整理成 CSV，
+  若录入中文姓名遇到困难，最稳的办法是用 Excel 整理成 CSV，
   再用「学生管理 → `i` 导入 CSV」批量导入 —— 这条路不经过键盘输入法。
 
-### 因此建议的验证顺序
+### 建议的验证顺序
 
-1. 在 Windows 上先按上面的命令编译，确认零报错；
+1. 在 Windows 上按第二节的命令编译，确认零报错；
 2. 运行后先看主菜单与「科目管理」，确认中文没有变成乱码或方块；
 3. 再试「学生管理 → `a` 新增学生」，确认中文输入是否可用；
 4. 最后再导入真实班级数据。
