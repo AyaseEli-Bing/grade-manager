@@ -1,0 +1,604 @@
+/* ==========================================================================
+   班级成绩管理系统 · Design Tokens
+   --------------------------------------------------------------------------
+   设计师：颜好看
+   技术栈：Tauri v2 + 原生 HTML / CSS / JS（无框架、无构建步骤）
+   主题  ：浅色（v1 唯一主题）
+   寄存器：Product（工具型 —— 设计服务于功能，克制优先）
+   三轴刻度：DESIGN_VARIANCE 3 / MOTION_INTENSITY 2 / VISUAL_DENSITY 7
+             · Variance 3  → 数据工具需要可预测的对称网格，禁止装饰性非对称排版
+             · Motion 2    → 只保留功能性反馈动效，无装饰动画
+             · Density 7   → 驾驶舱下限：44px 行高、1px 分隔线、紧凑 padding
+
+   【使用铁律】
+   1. 全项目唯一允许出现裸色值（#hex / rgb()）的文件就是本文件，且仅限「§1 原始层」。
+      其余任何 .css 文件只允许写 Token 变量，例外仅 #fff / #000。
+   2. 颜色必须走「原始 Primitive → 语义 Semantic → 组件 Component」三层，
+      禁止组件层跨层直接引用 Primitive。
+   3. 禁止任何位置出现紫色→粉色渐变（#7C3AED / #A855F7 / #EC4899 的任意组合）。
+   4. 禁止 `cubic-bezier(0.68, -0.55, 0.265, 1.55)` 等回弹缓动。
+   5. 禁止 emoji 充当图标。图标为内联 SVG 描边图标，规范见 docs/UIUX.md 第 4 节。
+   ========================================================================== */
+
+:root {
+  /* ========================================================================
+     §1  A1-IDENTITY · 颜色原始层（Primitive）
+     ------------------------------------------------------------------------
+     全项目唯一的裸色值区域。下方任何 Section 都不允许再出现 #hex。
+     ======================================================================== */
+
+  /* --- 1.1 中性色 Neutral（微冷灰蓝，长时间看数据不刺眼）--- */
+  --gray-0:   #FFFFFF;
+  --gray-25:  #FCFDFD;
+  --gray-50:  #F7F9FA;
+  --gray-100: #EEF1F4;
+  --gray-200: #E1E6EB;
+  --gray-300: #C6CED6;
+  --gray-400: #98A3AE;   /* 仅用于 disabled 文本与装饰性控件描边 */
+  --gray-500: #66727F;   /* 辅助文本下限：对白底 4.9:1 / 对 --bg-app 4.7:1（AA）*/
+  --gray-600: #4D5866;
+  --gray-700: #3A444F;
+  --gray-800: #262D35;
+  --gray-900: #171C21;
+
+  /* RGB 三元组形式（用于 rgb(... / alpha) 透明派生，避免下游硬编码） */
+  --rgb-gray-900: 23 28 33;
+
+  /* --- 1.2 品牌强调色 Accent · 深青 Deep Teal ------------------------------
+     选型理由：避开 Tailwind 默认 Indigo #6366F1（AI 模板首罪）与常见 Emerald
+     #059669，同时满足"非紫非粉 + 沉稳专业"。深青在浅色背景上是冷调、低疲劳的
+     仪表感颜色，适合教师长时间核对分数。对比度：#0F6C72 对白底 6.1:1（AA/大字
+     AAA），白字铺于其上 6.1:1（AA）。                                      */
+  --teal-50:  #EEF7F7;
+  --teal-100: #D3EAEA;
+  --teal-200: #A8D6D6;
+  --teal-300: #71BBBB;
+  --teal-400: #3C9C9C;
+  --teal-500: #1B8182;
+  --teal-600: #0F6C72;   /* ← 基准强调色 */
+  --teal-700: #0E575C;
+  --teal-800: #10474B;
+  --teal-900: #0D3A3D;
+
+  --rgb-teal-600: 15 108 114;
+  --rgb-teal-700: 14 87 92;
+
+  /* --- 1.3 语义色原始值 Semantic Primitives ------------------------------- */
+  /* 成功：偏深的森林绿，避免荧光绿 */
+  --green-50:  #EFF8F2;
+  --green-200: #BCE1CB;
+  --green-600: #1A7348;
+  --green-700: #17653F;
+
+  /* 警告：沉稳琥珀，不用亮黄 */
+  --amber-50:  #FDF7EA;
+  --amber-200: #F2DFB2;
+  --amber-600: #96600A;
+  --amber-700: #87550A;
+
+  /* 危险：降饱和砖红（未使用 #DC2626 默认值），长期看更耐 fatiguing */
+  --red-50:  #FDF2F1;
+  --red-200: #F3C9C4;
+  --red-600: #C0362C;
+  --red-700: #9E2C24;
+
+  --rgb-red-600: 192 54 44;
+  --rgb-amber-600: 167 106 11;
+  --rgb-green-600: 29 128 80;
+
+  /* --- 1.4 奖牌色原始值（用于排名前三区分，非 emoji）---------------------- */
+  --medal-gold-fg:    #8F6208;   /* 对 #FDF6E3 底 5.0:1 */
+  --medal-gold-bg:    #FDF6E3;
+  --medal-gold-brd:   #EEDDAE;
+
+  --medal-silver-fg:  #53606D;   /* 对 #F2F5F8 底 5.9:1 */
+  --medal-silver-bg:  #F2F5F8;
+  --medal-silver-brd: #DCE2E8;
+
+  --medal-bronze-fg:  #8A5232;   /* 对 #FAF0E9 底 5.6:1 */
+  --medal-bronze-bg:  #FAF0E9;
+  --medal-bronze-brd: #E9D5C5;
+
+  /* ========================================================================
+     §2  A1-IDENTITY · 字体 (Typography Identity)
+     ------------------------------------------------------------------------
+     规则：离线桌面应用，零网络字体依赖。全部走系统字体栈。
+     中文优先 PingFang SC（macOS）/ Microsoft YaHei（Windows），末位兜底思源黑体。
+     ======================================================================== */
+  --font-body: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB",
+               "Microsoft YaHei", "Source Han Sans SC", "Noto Sans CJK SC",
+               "Segoe UI", Roboto, sans-serif;
+
+  /* 标题与正文同栈：工具型产品不引入第二套字体，靠字重与字号建立层级 */
+  --font-display: var(--font-body);
+
+  /* 等宽：仅用于分数、学号等需要纵向对齐的数值列 */
+  --font-mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas,
+               "PingFang SC", monospace;
+
+  /* --- 2.1 字号阶梯（8 级，13px 起，适配 7 级密度）--- */
+  --text-xs:  11px;   /* 状态栏、表格脚注 */
+  --text-sm:  12px;   /* 徽章、辅助说明、Import/Export 副按钮 */
+  --text-base: 13px;  /* 表格正文、输入框 —— 高密度基准 */
+  --text-md:  14px;   /* 按钮、导航项、卡片正文 */
+  --text-lg:  16px;   /* 卡片标题、区块标题 */
+  --text-xl:  20px;   /* 页面标题（视图 Title） */
+  --text-2xl: 24px;   /* 统计数字（KPI 值） */
+  --text-3xl: 30px;   /* 空状态/异常页强调 —— 本产品不设 Hero，不往上再加 */
+
+  /* --- 2.2 行高 --- */
+  --leading-tight:   1.25;
+  --leading-snug:    1.35;
+  --leading-body:    1.55;
+  --leading-table:   1.45;
+
+  /* --- 2.3 字重（三级体系，不出现更多字重）--- */
+  --fw-regular:  400;   /* 正文、描述 */
+  --fw-medium:   510;   /* 按钮、表头、小标题 */
+  --fw-semibold: 590;   /* 页面大标题、KPI 数值 */
+
+  /* --- 2.4 字距 --- */
+  --tracking-body:     0;         /* 中文正文不做字距调整 */
+  --tracking-tight:   -0.01em;    /* 标题 ≥20px */
+  --tracking-caps:     0.06em;    /* 全大写字样（如科目代号） */
+
+  /* ========================================================================
+     §3  A2-SEMANTIC · 语义色（下游唯一可直接引用的颜色层）
+     ======================================================================== */
+
+  /* --- 3.1 表面 Surface --- */
+  --bg-app:            var(--gray-50);   /* 应用底色（内容区背景） */
+  --bg-surface:        var(--gray-0);    /* 卡片 / 表格 / 弹窗表面 */
+  --bg-surface-subtle: var(--gray-100);  /* 表头、二级栏、侧边栏底色 */
+  --bg-surface-sunken: var(--gray-200);  /* 进度条底槽、Disabled 输入框 */
+  --bg-sidebar:        var(--gray-25);   /* 侧边栏（比 app 底稍亮一层） */
+  --bg-scrim:          rgb(var(--rgb-gray-900) / 0.32);  /* 模态遮罩 */
+
+  /* --- 3.2 前景 Foreground --- */
+  --fg-default:   var(--gray-800);   /* 正文、表格主文本 */
+  --fg-secondary: var(--gray-600);   /* 次级文本、单位标签 */
+  --fg-muted:     var(--gray-500);   /* 辅助说明、占位符、表脚 */
+  --fg-subtle:    var(--gray-400);   /* 禁用态、未激活排序箭头 */
+  --fg-on-accent: var(--gray-0);     /* 强调色底上的文字 */
+
+  /* --- 3.3 边框 Border（工具型产品靠 1px 线分组，不靠卡片投影）--- */
+  --border-default: var(--gray-200);   /* 卡片、输入框、分隔线（主） */
+  --border-subtle:  var(--gray-100);   /* 表格行内分隔线 */
+  --border-strong:  var(--gray-300);   /* 悬停强调、表格外框 */
+  --border-navbar:  var(--gray-200);   /* 顶栏与内容区的分界 */
+
+  /* --- 3.4 强调色 Accent（每屏可见使用 ≤ 2 处）--- */
+  --accent-default:        var(--teal-600);
+  --accent-hover:          var(--teal-700);
+  --accent-active:         var(--teal-800);
+  --accent-selected-bg:    var(--teal-50);    /* 选中行 / 选中导航项底色 */
+  --accent-selected-brd:   var(--teal-200);   /* 选中项边框 */
+  --accent-emphasis:       var(--teal-700);   /* 链接、可点击表头 hover */
+  --accent-focus-ring:     rgb(var(--rgb-teal-600) / 0.30);
+
+  /* --- 3.5 语义状态 Semantic State --- */
+  --success-fg:    var(--green-700);
+  --success-bg:    var(--green-50);
+  --success-brd:   var(--green-200);
+  --success-solid: var(--green-600);
+
+  --warn-fg:    var(--amber-700);
+  --warn-bg:    var(--amber-50);
+  --warn-brd:   var(--amber-200);
+  --warn-solid: var(--amber-600);
+
+  --danger-fg:    var(--red-700);
+  --danger-bg:    var(--red-50);
+  --danger-brd:   var(--red-200);
+  --danger-solid: var(--red-600);
+
+  /* info 复用 accent 家族：保持色相数量最小化的克制策略 */
+  --info-fg:    var(--teal-700);
+  --info-bg:    var(--teal-50);
+  --info-brd:   var(--teal-200);
+  --info-solid: var(--teal-600);
+
+  /* --- 3.6 焦点环 --- */
+  --focus-ring:        0 0 0 3px var(--accent-focus-ring);
+  --focus-ring-danger: 0 0 0 3px rgb(var(--rgb-red-600) / 0.24);
+
+  /* ========================================================================
+     §4  C-EXTENSION · 业务扩展色（本项目专属）
+     ======================================================================== */
+
+  /* --- 4.1 排名前三（RANK 1/2/3，纯 Token 着色，禁止 emoji/图标代替）--- */
+  --rank-1-fg:  var(--medal-gold-fg);
+  --rank-1-bg:  var(--medal-gold-bg);
+  --rank-1-brd: var(--medal-gold-brd);
+  --rank-2-fg:  var(--medal-silver-fg);
+  --rank-2-bg:  var(--medal-silver-bg);
+  --rank-2-brd: var(--medal-silver-brd);
+  --rank-3-fg:  var(--medal-bronze-fg);
+  --rank-3-bg:  var(--medal-bronze-bg);
+  --rank-3-brd: var(--medal-bronze-brd);
+  /* 第 4 名及以后：不着色，仅用强调/弱化字重区分区间 */
+  --rank-plain-fg: var(--fg-secondary);
+
+  /* --- 4.2 分数字段状态（单元格级，仅高亮异常值，普通分不着色）--- */
+  --score-default-fg:   var(--fg-default);
+  --score-excellent-fg: var(--teal-700);   /* ≥ 满分的 90% */
+  --score-excellent-bg: var(--teal-50);
+  --score-fail-fg:      var(--red-700);    /* < 满分的 60% */
+  --score-fail-bg:      var(--red-50);
+  --score-invalid-fg:   var(--red-700);    /* 超出该科满分 / 负数 / 非数字 */
+  --score-invalid-bg:   var(--red-50);
+  --score-invalid-brd:  var(--red-600);
+  --score-empty-fg:     var(--fg-muted);  /* 未录入（不是 0 分） */
+  --score-editing-bg:   var(--gray-0);
+  --score-editing-brd:  var(--accent-default);
+
+  /* --- 4.3 成绩分布直方图（纯 CSS 柱状，5 个分数段）---
+     单调递增单色相 + 不及格独立红：一眼能读出分布重心，不靠图例也懂 */
+  --dist-bin-fail:   var(--red-600);    /* < 60% */
+  --dist-bin-b1:     var(--teal-200);   /* 60 ~ 70% */
+  --dist-bin-b2:     var(--teal-300);   /* 70 ~ 80% */
+  --dist-bin-b3:     var(--teal-500);   /* 80 ~ 90% */
+  --dist-bin-b4:     var(--teal-700);   /* ≥ 90% */
+  --dist-track-bg:   var(--gray-100);   /* 柱底槽 */
+  --dist-axis-fg:    var(--fg-muted);   /* 坐标轴文字 */
+
+  /* --- 4.4 学科对比条形（统计页"按科目查"的横向对比条）--- */
+  --subject-bar-fill:  var(--teal-500);
+  --subject-bar-track: var(--gray-100);
+  --subject-bar-label: var(--fg-secondary);
+
+  /* ========================================================================
+     §5  A2-STRUCTURE · 间距（4px 基准网格）
+     ------------------------------------------------------------------------
+     允许值白名单：4 8 12 16 20 24 32 40 48 64
+     禁用值：2 3 5 6 7 10 13 15 18 22 25 30 等非 4 倍数
+     ======================================================================== */
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-5:  20px;
+  --space-6:  24px;
+  --space-8:  32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  /* ========================================================================
+     §6  A2-STRUCTURE · 圆角
+     ------------------------------------------------------------------------
+     上限 12px：禁止 ≥24px 过度圆滑（AI 味特征）。
+     ======================================================================== */
+  --radius-none: 0;
+  --radius-sm:   4px;     /* Badge、Tag、单元格热区 */
+  --radius-md:   6px;     /* 按钮、输入框、Checkbox */
+  --radius-lg:   8px;     /* 卡片、表格容器、Toast */
+  --radius-xl:   12px;    /* 模态框 —— 本产品最大圆角 */
+  --radius-full: 9999px;  /* 头像、状态圆点 */
+
+  /* ========================================================================
+     §7  A2-STRUCTURE · 阴影与深度
+     ------------------------------------------------------------------------
+     投影色统一由 --rgb-shadow 三元组派生，不在下游重复写 rgba()。
+     禁止「1px 边框 + 模糊 ≥16px 投影」同时出现在同一元素（幽灵卡片）。
+     ======================================================================== */
+  --rgb-shadow: 23 28 33;
+
+  --elevation-flat:   none;                                              /* 表格、分组容器 */
+  --elevation-ring:   0 0 0 1px var(--border-default);                   /* 替代投影的分组手段 */
+  --elevation-xs:     0 1px 2px rgb(var(--rgb-shadow) / 0.06);           /* 输入框聚焦、小卡片 */
+  --elevation-sm:     0 1px 3px rgb(var(--rgb-shadow) / 0.08),
+                      0 1px 2px rgb(var(--rgb-shadow) / 0.04);           /* 卡片 */
+  --elevation-md:     0 4px 12px rgb(var(--rgb-shadow) / 0.10),
+                      0 1px 3px rgb(var(--rgb-shadow) / 0.06);           /* 下拉面板、Toast */
+  --elevation-lg:     0 12px 32px rgb(var(--rgb-shadow) / 0.16),
+                      0 2px 8px rgb(var(--rgb-shadow) / 0.08);           /* 模态框 */
+
+  /* z-index 层级 */
+  --z-base:      0;
+  --z-sticky:    100;   /* 表格固定表头 */
+  --z-dropdown:  400;   /* 考试切换下拉、表头筛选 */
+  --z-tooltip:   600;   /* 单元格校验提示气泡 */
+  --z-modal:     1000;
+  --z-toast:     1200;
+
+  /* ========================================================================
+     §8  A2-STRUCTURE · 布局尺寸
+     ======================================================================== */
+  --layout-topbar-h:      48px;
+  --layout-sidebar-w:     216px;
+  --layout-sidebar-w-min: 56px;
+  --layout-statusbar-h:   28px;
+  --layout-toolbar-h:     48px;   /* 视图内工具条（标题 + 操作按钮） */
+  --layout-content-pad-x: var(--space-6);
+  --layout-content-pad-y: var(--space-5);
+
+  --table-header-h:       36px;
+  --table-row-h:          44px;   /* 默认：满足 44px 触摸/点击热区 */
+  --table-row-h-dense:    38px;   /* 高密度模式（可选开关） */
+  --table-cell-pad-x:     var(--space-3);
+  --table-first-col-w:    88px;
+  --table-score-col-w:    76px;
+  --table-index-col-w:    52px;
+
+  /* ========================================================================
+     §9  A2-STRUCTURE · 动效
+     ------------------------------------------------------------------------
+     基准收敛值 150ms；本项目 MOTION_INTENSITY=2，最长不超过 240ms。
+     禁止回弹缓动。禁止动画 width / height / top / left。
+     ======================================================================== */
+  --duration-instant: 80ms;    /* 按钮按下、Checkbox 打勾 */
+  --duration-fast:    120ms;   /* hover 变色 */
+  --duration-base:    150ms;   /* 状态切换收敛值 */
+  --duration-enter:   200ms;   /* 下拉展开、Toast 进入 */
+  --duration-modal:   240ms;   /* 模态框进出（本项目上限） */
+
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);      /* 通用，无过冲 */
+  --ease-out:      cubic-bezier(0.16, 1, 0.3, 1);   /* 进入，无过冲 */
+  --ease-in:       cubic-bezier(0.4, 0, 1, 1);      /* 退出 */
+
+  /* 全局动画开关位：前端通过添加/移除 .reduce-motion 也可手动降级 */
+  --motion-enabled: 1;
+
+  /* ========================================================================
+     §10  B-SLOT · 组件层 Token（前端直接消费这一层）
+     ======================================================================== */
+
+  /* --- 10.1 按钮 Button --- */
+  --btn-height:       32px;
+  --btn-height-sm:    28px;
+  --btn-pad-x:        var(--space-3);
+  --btn-pad-x-sm:     var(--space-2);
+  --btn-gap:          var(--space-1);       /* 图标与文字间距 */
+  --btn-radius:       var(--radius-md);
+  --btn-font-size:    var(--text-md);
+  --btn-font-weight:  var(--fw-medium);
+  --btn-icon-size:    16px;
+
+  --btn-primary-bg:        var(--accent-default);
+  --btn-primary-fg:        var(--fg-on-accent);
+  --btn-primary-bg-hover:  var(--accent-hover);
+  --btn-primary-bg-active: var(--accent-active);
+  --btn-primary-ring:      var(--focus-ring);
+
+  --btn-secondary-bg:        var(--bg-surface);
+  --btn-secondary-fg:        var(--fg-default);
+  --btn-secondary-brd:       var(--border-strong);
+  --btn-secondary-bg-hover:  var(--bg-surface-subtle);
+  --btn-secondary-brd-hover: var(--gray-300);
+  --btn-secondary-bg-active: var(--bg-surface-sunken);
+
+  --btn-ghost-bg:        transparent;
+  --btn-ghost-fg:        var(--fg-secondary);
+  --btn-ghost-bg-hover:  var(--bg-surface-subtle);
+  --btn-ghost-fg-hover:  var(--fg-default);
+  --btn-ghost-bg-active: var(--gray-100);
+
+  --btn-danger-bg:        var(--danger-solid);
+  --btn-danger-fg:        var(--gray-0);
+  --btn-danger-bg-hover:  var(--danger-fg);
+  --btn-danger-bg-active: var(--red-700);
+  --btn-danger-ring:      var(--focus-ring-danger);
+
+  --btn-disabled-bg:     var(--bg-surface-sunken);
+  --btn-disabled-fg:     var(--fg-subtle);
+  --btn-disabled-opacity: 0.6;
+
+  /* --- 10.2 输入框 / 选择器 Input & Select --- */
+  --input-height:      32px;
+  --input-pad-x:       var(--space-2);
+  --input-radius:      var(--radius-md);
+  --input-font-size:   var(--text-base);
+  --input-bg:          var(--bg-surface);
+  --input-fg:          var(--fg-default);
+  --input-placeholder: var(--fg-muted);   /* 占位符需可读，故取 4.9:1 的 fg-muted */
+  --input-brd:         var(--border-strong);
+  --input-brd-hover:   var(--gray-400);
+  --input-brd-focus:   var(--accent-default);
+  --input-ring-focus:  var(--focus-ring);
+  --input-brd-invalid: var(--danger-solid);
+  --input-ring-invalid: var(--focus-ring-danger);
+  --input-bg-disabled: var(--bg-surface-sunken);
+  --input-fg-disabled: var(--fg-subtle);
+
+  /* 成绩录入单元格：平时无框 hover 才显形，减少视觉噪音 */
+  --cell-input-brd-hover:  var(--gray-300);
+  --cell-input-bg-focus:   var(--gray-0);
+
+  /* --- 10.3 侧边导航 Sidebar Nav --- */
+  --nav-item-height:   34px;
+  --nav-item-radius:   var(--radius-md);
+  --nav-item-pad-x:    var(--space-2);
+  --nav-item-gap:      var(--space-2);
+  --nav-icon-size:     16px;
+  --nav-font-size:     var(--text-md);
+  --nav-fg:            var(--fg-secondary);
+  --nav-fg-hover:      var(--fg-default);
+  --nav-bg-hover:      var(--gray-100);
+  --nav-fg-active:     var(--accent-emphasis);
+  --nav-bg-active:     var(--accent-selected-bg);
+  --nav-weight-active: var(--fw-medium);
+  --nav-group-title-fg: var(--fg-subtle);
+  --nav-group-title-size: var(--text-xs);
+
+  /* --- 10.4 表格 Table --- */
+  --table-bg:            var(--bg-surface);
+  --table-radius:        var(--radius-lg);
+  --table-brd:           var(--border-default);
+  --table-header-bg:     var(--bg-surface-subtle);
+  --table-header-fg:     var(--fg-secondary);
+  --table-header-weight: var(--fw-medium);
+  --table-header-size:   var(--text-base);
+  --table-row-brd:       var(--border-subtle);
+  --table-row-brd-last:  transparent;
+  --table-cell-fg:       var(--fg-default);
+  --table-cell-size:     var(--text-base);
+  --table-cell-numeric-font: var(--font-mono);
+  --table-row-bg-hover:  var(--gray-50);
+  --table-row-bg-active: var(--gray-100);
+  --table-row-bg-selected:     var(--accent-selected-bg);
+  --table-row-brd-selected:    var(--accent-selected-brd);
+  --table-zebra-bg:      var(--gray-25);
+  --table-footer-bg:     var(--bg-surface-subtle);
+  --table-footer-fg:     var(--fg-muted);
+  --table-col-brd:       var(--border-subtle);   /* 垂直分隔（仅科目列之间） */
+  --table-sticky-shadow: 0 1px 0 var(--border-default);
+
+  /* --- 10.5 卡片 Card（统计指标卡）--- */
+  --card-bg:        var(--bg-surface);
+  --card-brd:       var(--border-default);
+  --card-radius:    var(--radius-lg);
+  --card-shadow:    var(--elevation-flat);       /* 默认无投影，靠边框分组 */
+  --card-shadow-hover: var(--elevation-sm);
+  --card-pad:       var(--space-4);
+  --card-gap:       var(--space-4);
+  --card-title-fg:  var(--fg-secondary);
+  --card-title-size: var(--text-base);
+  --card-value-fg:  var(--fg-default);
+  --card-value-size: var(--text-2xl);
+  --card-value-weight: var(--fw-semibold);
+  --card-unit-fg:   var(--fg-muted);
+  --card-unit-size: var(--text-sm);
+  --card-delta-up-fg:   var(--success-fg);
+  --card-delta-down-fg: var(--danger-fg);
+
+  /* --- 10.6 徽章 Badge --- */
+  --badge-radius:   var(--radius-sm);
+  --badge-pad-x:    var(--space-1);
+  --badge-pad-y:    1px;
+  --badge-size:     var(--text-sm);
+  --badge-weight:   var(--fw-medium);
+  --badge-neutral-fg: var(--fg-secondary);
+  --badge-neutral-bg: var(--gray-100);
+  --badge-success-fg: var(--success-fg);
+  --badge-success-bg: var(--success-bg);
+  --badge-warn-fg:    var(--warn-fg);
+  --badge-warn-bg:    var(--warn-bg);
+  --badge-danger-fg:  var(--danger-fg);
+  --badge-danger-bg:  var(--danger-bg);
+  --badge-accent-fg:  var(--accent-emphasis);
+  --badge-accent-bg:  var(--accent-selected-bg);
+
+  /* --- 10.7 复选 Checkbox（批量删除多选）--- */
+  --checkbox-size:       16px;
+  --checkbox-radius:     var(--radius-sm);
+  --checkbox-bg:         var(--bg-surface);
+  --checkbox-brd:        var(--gray-400);
+  --checkbox-brd-hover:  var(--gray-500);
+  --checkbox-bg-checked: var(--accent-default);
+  --checkbox-brd-checked: var(--accent-default);
+  --checkbox-fg-checked: var(--fg-on-accent);
+  --checkbox-indeterminate-bg: var(--accent-default);
+
+  /* --- 10.8 模态框 Modal --- */
+  --modal-width:     420px;
+  --modal-radius:    var(--radius-xl);
+  --modal-bg:        var(--bg-surface);
+  --modal-shadow:    var(--elevation-lg);
+  --modal-pad:       var(--space-6);
+  --modal-title-size: var(--text-lg);
+  --modal-body-size:  var(--text-md);
+  --modal-gap:       var(--space-4);
+  --modal-icon-size: 40px;
+  --modal-danger-icon-bg: var(--danger-bg);
+
+  /* --- 10.9 Toast --- */
+  --toast-min-width:  280px;
+  --toast-max-width:  420px;
+  --toast-radius:     var(--radius-lg);
+  --toast-bg:         var(--gray-800);      /* 深色底 + 浅色字：强提示不抢主色 */
+  --toast-fg:         var(--gray-0);
+  --toast-shadow:     var(--elevation-md);
+  --toast-pad:        var(--space-3) var(--space-4);
+  --toast-gap:        var(--space-2);
+  --toast-icon-size:  16px;
+  --toast-success-icon: var(--green-200);
+  --toast-danger-icon:  var(--red-200);
+  --toast-info-icon:    var(--teal-200);
+  --toast-offset-bottom: var(--space-6);
+  --toast-offset-right:  var(--space-6);
+
+  /* --- 10.10 下拉面板 Popover / Select Menu --- */
+  --popover-bg:        var(--bg-surface);
+  --popover-brd:       var(--border-default);
+  --popover-radius:    var(--radius-lg);
+  --popover-shadow:    var(--elevation-md);
+  --popover-pad:       var(--space-1);
+  --popover-item-h:    32px;
+  --popover-item-fg:   var(--fg-default);
+  --popover-item-bg-hover:  var(--gray-100);
+  --popover-item-fg-active: var(--accent-emphasis);
+  --popover-item-bg-active: var(--accent-selected-bg);
+
+  /* --- 10.11 空状态 Empty State --- */
+  --empty-pad:        var(--space-12) var(--space-6);
+  --empty-gap:        var(--space-4);
+  --empty-icon-size:  48px;
+  --empty-icon-fg:    var(--gray-300);
+  --empty-title-fg:   var(--fg-default);
+  --empty-title-size: var(--text-md);
+  --empty-desc-fg:    var(--fg-muted);
+  --empty-desc-size:  var(--text-base);
+  --empty-max-width:  360px;
+
+  /* --- 10.12 骨架屏 Skeleton（Loading）--- */
+  --skeleton-bg:      var(--gray-100);
+  --skeleton-shine:   var(--gray-200);
+  --skeleton-radius:  var(--radius-sm);
+  --skeleton-duration: 1200ms;
+
+  /* --- 10.13 状态栏 StatusBar --- */
+  --statusbar-h:    var(--layout-statusbar-h);
+  --statusbar-bg:   var(--gray-25);
+  --statusbar-fg:   var(--fg-muted);
+  --statusbar-brd:  var(--border-subtle);
+  --statusbar-size: var(--text-xs);
+  --statusbar-pad-x: var(--space-4);
+
+  /* --- 10.14 标签页 / 分段控件 Segmented（"按学生查 / 按科目查"切换）--- */
+  --segmented-bg:        var(--gray-100);
+  --segmented-radius:    var(--radius-md);
+  --segmented-pad:       2px;
+  --segmented-item-h:    28px;
+  --segmented-item-fg:   var(--fg-secondary);
+  --segmented-item-bg-active: var(--bg-surface);
+  --segmented-item-fg-active: var(--fg-default);
+  --segmented-item-shadow-active: var(--elevation-xs);
+}
+
+/* ==========================================================================
+   §11  无障碍降级：prefers-reduced-motion
+   --------------------------------------------------------------------------
+   系统开启「减弱动效」时把所有时长归零，而非简单 display:none，
+   保证 transform / opacity 的终态仍然生效，界面不会卡在中间帧。
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-instant: 0ms;
+    --duration-fast:    0ms;
+    --duration-base:    0ms;
+    --duration-enter:   0ms;
+    --duration-modal:   0ms;
+    --skeleton-duration: 0ms;
+  }
+}
+
+/* 手动降级钩子：给 <html> 加 .reduce-motion 可关闭动效（设置项预留） */
+.reduce-motion {
+  --duration-instant: 0ms;
+  --duration-fast:    0ms;
+  --duration-base:    0ms;
+  --duration-enter:   0ms;
+  --duration-modal:   0ms;
+  --skeleton-duration: 0ms;
+}
+
+/* ==========================================================================
+   §12  焦点可见性基线
+   --------------------------------------------------------------------------
+   全局约定：只用 :focus-visible，绝不写 outline: none 而不提供替代指示。
+   ========================================================================== */
+:where(button, [role="button"], input, select, textarea, a, [tabindex]):focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}

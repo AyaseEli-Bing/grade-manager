@@ -1,0 +1,28 @@
+[package]
+name = "grade-manager"
+version = "1.0.0"
+description = "班级成绩管理系统"
+authors = ["MVP Dev Expert Team"]
+edition = "2021"
+rust-version = "1.77.2"
+
+[lib]
+name = "grade_manager_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-dialog = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[profile.release]
+codegen-units = 1
+# thin LTO：相比 full LTO 大幅缩短打包时间，体积差异对本项目可忽略
+lto = "thin"
+opt-level = "s"
+panic = "abort"
+strip = true

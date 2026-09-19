@@ -1,0 +1,5 @@
+# 本机工具链为 Rust 1.87，而 tauri 依赖树中部分 crate（time / icu / plist / serde_with）
+# 的最新版本声明了 rust-version = 1.88。启用 fallback 解析策略后，Cargo 会自动
+# 选择与 1.87 兼容的旧版本，避免"requires rustc 1.88"的解析失败。
+[resolver]
+incompatible-rust-versions = "fallback"

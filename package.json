@@ -1,0 +1,26 @@
+{
+  "name": "grade-manager",
+  "version": "1.0.0",
+  "private": true,
+  "description": "班级成绩管理系统 - 桌面版",
+  "type": "module",
+  "scripts": {
+    "dev": "tauri dev",
+    "build": "tauri build",
+    "build:dmg": "tauri build --bundles dmg",
+    "icons": "tauri icon assets/icon.png",
+    "verify": "bash scripts/verify.sh",
+    "test": "node scripts/test-logic.mjs && node scripts/test-desktop.mjs && node scripts/test-ui.mjs",
+    "test:logic": "node scripts/test-logic.mjs",
+    "test:desktop": "node scripts/test-desktop.mjs",
+    "test:ui": "node scripts/test-ui.mjs"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^2.1.1",
+    "@tauri-apps/plugin-dialog": "^2.0.3"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.1.0",
+    "jsdom": "^30.1.0"
+  }
+}
