@@ -1,5 +1,7 @@
 # 班级成绩管理系统
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) ![Tauri](https://img.shields.io/badge/tauri-v2-ffc131.svg) ![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Windows%20%7C%20Linux-lightgrey.svg) ![Offline](https://img.shields.io/badge/offline-ready-3fb950.svg)
+
 一个面向班主任 / 任课老师的离线成绩管理桌面应用。支持学生信息的增删改查、多场考试的自定义科目录入、总分与平均分自动计算、班级排名、按学生与按科目的双维度查询统计，以及数据的本地保存与 JSON / CSV 导入导出。
 
 技术栈为 Tauri v2 + 原生 HTML / CSS / ES Module —— 没有框架、没有打包器、没有第三方运行时依赖，安装包约 5 MB，双击即用，不需要联网。
@@ -27,7 +29,7 @@
 
 ### 方式一：直接下载可执行程序（推荐）
 
-前往 [Releases](https://github.com/AyaseElibing/grade-manager/releases/latest) 下载：
+前往 [Releases](https://github.com/AyaseEli-Bing/grade-manager/releases/latest) 下载：
 
 | 平台 | 文件 | 说明 |
 |------|------|------|
